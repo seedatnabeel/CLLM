@@ -44,7 +44,7 @@ pip install -r requirements.txt
 ## Getting started with CLLM
 
 
-To get started with CLLM one can try the tutorial.ipynb notebook in the root folder. One can generate synthetic data using LLM served via OpenAI, Together or VLLM.
+To get started with CLLM one can try the ``tutorial.ipynb`` notebook in the root folder. One can generate synthetic data using LLM served via OpenAI, Together or VLLM.
 
 ### Generation
 To run generation of multiple datasets see ``run_llm_generator.ipynb``
