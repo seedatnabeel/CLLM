@@ -1,6 +1,6 @@
 # Curated LLM: Synergy of LLMs and Data Curation for tabular augmentation in low-data regimes
 
-[![arXiv](https://img.shields.io/badge/arXiv-2312.12112-b31b1b.svg)](https://arxiv.org/)
+[![arXiv](https://img.shields.io/badge/arXiv-2312.12112-b31b1b.svg)](https://arxiv.org/abs/2312.12112)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/seedatnabeel/CLLM/blob/main/LICENSE)
 
 
