@@ -216,25 +216,22 @@ class Curator:
         return entropy - entropy_exp
 
 
-
-
-
-
 def get_groups(confidence, aleatoric_uncertainty, curation_xthresh, curation_ythresh):
     import numpy as np
+
     percentile_thresh = 50
     thresh = curation_ythresh
     conf_thresh_low = curation_ythresh
     conf_thresh_high = 1 - curation_ythresh
     conf_thresh = 0.5
 
-    #x_thresh = np.percentile(aleatoric_uncertainty, curation_xthresh) #curation_xthresh
+    # x_thresh = np.percentile(aleatoric_uncertainty, curation_xthresh) #curation_xthresh
     x_thresh = curation_xthresh
-    
+
     hard_train = np.where(
         (confidence <= conf_thresh_low) & (aleatoric_uncertainty <= x_thresh)
     )[0]
-   
+
     easy_train = np.where(
         (confidence >= conf_thresh_high) & (aleatoric_uncertainty <= x_thresh)
     )[0]
@@ -246,24 +243,30 @@ def get_groups(confidence, aleatoric_uncertainty, curation_xthresh, curation_yth
             ambig_train.append(id)
 
     ambig_train = np.array(ambig_train)
-    
+
     return easy_train, ambig_train, hard_train
 
 
-
-def data_centric_curation(X_train_orig, y_train_orig, X_check, y_check, 
-                 curation_metric="aleatoric", retrain=False, nest = 100, 
-                 curation_ythresh=0.2, curation_xthresh=0.2):
+def data_centric_curation(
+    X_train_orig,
+    y_train_orig,
+    X_check,
+    y_check,
+    curation_metric="aleatoric",
+    retrain=False,
+    nest=100,
+    curation_ythresh=0.2,
+    curation_xthresh=0.2,
+):
     from xgboost import XGBClassifier
     import numpy as np
 
-    # train xgboost on X_train_orig, y_train_orig 
+    # train xgboost on X_train_orig, y_train_orig
     xgb = XGBClassifier(n_estimators=nest)
     xgb.fit(X_train_orig, y_train_orig)
     if retrain:
         xgb = XGBClassifier(n_estimators=nest)
         xgb.fit(X_check, y_check)
-
 
     Curator_xgb = Curator(X=X_check, y=y_check)
 
@@ -282,9 +285,9 @@ def data_centric_curation(X_train_orig, y_train_orig, X_check, y_check,
 
     confidence = Curator_xgb.confidence
     # confidence is an array of size [N,1] where N is the number of training data points
-    
-    if curation_xthresh==0:
-        print('Using adaptive threshold')
+
+    if curation_xthresh == 0:
+        print("Using adaptive threshold")
         curation_xthresh = 0.75 * (np.max(curation_xmetric) - np.min(curation_xmetric))
     curation_ythresh = curation_ythresh
 
@@ -296,5 +299,3 @@ def data_centric_curation(X_train_orig, y_train_orig, X_check, y_check,
     )
 
     return curated_train, ambig_train, unlearnable_train, Curator_xgb
-
-    

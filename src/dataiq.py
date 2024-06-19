@@ -28,7 +28,7 @@ class DataIQ:
         self._true_probabilities = None
         self.catboost = catboost
 
-    def on_epoch_end(self, clf, device="cpu", iteration=1, lr=True,  **kwargs):
+    def on_epoch_end(self, clf, device="cpu", iteration=1, lr=True, **kwargs):
         """
         The function computes the gold label and true label probabilities over all samples in the
         dataset
@@ -55,7 +55,7 @@ class DataIQ:
             y = y.squeeze()
 
         if lr:
-            
+
             probabilities = torch.tensor(
                 clf.predict_proba(x),
                 device=device,
@@ -72,8 +72,6 @@ class DataIQ:
                 clf.predict_proba(x, ntree_start=0, ntree_end=iteration),
                 device=device,
             )
-
-   
 
         # one hot encode the labels
         y = torch.nn.functional.one_hot(
@@ -224,5 +222,3 @@ class DataIQ:
         X = np.mean(self._gold_labels_probabilities, axis=1)
         entropy_exp = -1 * np.sum(X * np.log(X + 1e-12), axis=-1)
         return entropy - entropy_exp
-
-
