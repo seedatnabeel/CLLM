@@ -56,7 +56,7 @@ def main():
     results["smote"] = {"X": X_syn, "y": y_syn}
 
     # synthcity models
-    generative_models = ["tvae", "ctgan", "nflow"]
+    generative_models = ["tvae", "ctgan", "nflow", "ddpm"]
     for model_name in generative_models:
         X_syn, y_syn = synthcity_generate(
             name=model_name,

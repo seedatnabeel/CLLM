@@ -199,10 +199,10 @@ def compute_synthcity_metrics(results, X_train_orig, y_train_orig, X_ref):
 
 def process_gpt(dataset, n_synthetic, temp, gpt_model, ns, seed):
     import pickle
-
-    filename = f"./new_llm_dfs/pipeline_llm_{dataset}_{n_synthetic}_{gpt_model}_{ns}_{seed}.pickle"
+    
+    filename = f"../save_dfs/pipeline_llm_{dataset}_{n_synthetic}_{gpt_model}_{ns}_{seed}.pickle"
     if gpt_model == "gpt4_nocol":
-        filename = f"./new_llm_dfs/pipeline_llm_{dataset}_{n_synthetic}_gpt4_{ns}_{seed}_nocol.pickle"
+        filename = f"../save_dfs/pipeline_llm_{dataset}_{n_synthetic}_gpt4_{ns}_{seed}_nocol.pickle"
     with open(filename, "rb") as f:
         loaded = pickle.load(f)
 
