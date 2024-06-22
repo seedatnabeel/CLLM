@@ -10,7 +10,7 @@ import torch
 class Curator:
     def __init__(self, X, y, sparse_labels: bool = False, catboost: bool = False):
         """
-        The function takes in the training data and the labels, and stores them in the class variables X
+        The Curator takes in the training data and the labels, and stores them in the class variables X
         and y. It also stores the boolean value of sparse_labels in the class variable _sparse_labels
         Args:
           X: the input data
@@ -217,15 +217,32 @@ class Curator:
 
 
 def get_groups(confidence, aleatoric_uncertainty, curation_xthresh, curation_ythresh):
-    import numpy as np
+    """
+    The function `get_groups` categorizes data points into easy, ambiguous, and hard groups based on
+    confidence, aleatoric uncertainty, and specified thresholds.
+    
+    Args:
+      confidence: Confidence is a measure of how certain the model is about its predictions. It
+    typically ranges from 0 to 1, with 1 indicating high confidence in the prediction.
+      aleatoric_uncertainty: Aleatoric uncertainty refers to the uncertainty inherent in the data
+    itself, which cannot be reduced even with infinite amounts of data. It is often associated with
+    noise or variability in the data that is irreducible. In the context of the `get_groups` function
+    you provided, aleatoric uncertainty is used
+      curation_xthresh: The `curation_xthresh` parameter in the `get_groups` function represents the
+    threshold for aleatoric uncertainty. This threshold is used to determine which data points fall into
+    the "hard" training group, the "easy" training group, and the "ambiguous" training group based on
+    their confidence
+      curation_ythresh: The `curation_ythresh` parameter is used as a threshold value for confidence
+    scores in the `get_groups` function. It is used to determine the range of confidence scores that are
+    considered for grouping data points into different categories.
+    
+    Returns:
+      The function `get_groups` returns three arrays: `easy_train`, `ambig_train`, and `hard_train`.
+    """
 
-    percentile_thresh = 50
-    thresh = curation_ythresh
     conf_thresh_low = curation_ythresh
     conf_thresh_high = 1 - curation_ythresh
-    conf_thresh = 0.5
 
-    # x_thresh = np.percentile(aleatoric_uncertainty, curation_xthresh) #curation_xthresh
     x_thresh = curation_xthresh
 
     hard_train = np.where(
@@ -258,6 +275,43 @@ def data_centric_curation(
     curation_ythresh=0.2,
     curation_xthresh=0.2,
 ):
+    
+    """
+    The `data_centric_curation` function uses XGBoost to train a classifier and then applies a curation
+    process based on specified metrics to categorize training data points into curated, ambiguous, and
+    unlearnable groups.
+    
+    Args:
+      X_train_orig: X_train_orig is the original training data features used to train the XGBoost
+    classifier. 
+      y_train_orig: `y_train_orig` is the original target labels for the training data.
+      X_check: X_check is the input data for which you want to perform data-centric curation. It is the
+    dataset that you want to evaluate and potentially curate based on the specified curation metrics and
+    thresholds.
+      y_check: `y_check` is the target variable for the data in `X_check`. It contains the true labels
+    or classes corresponding to the data points in `X_check`.
+      curation_metric: The `curation_metric` parameter in the `data_centric_curation` function
+    determines the type of metric used for data curation. Defaults to aleatoric
+      retrain: The `retrain` parameter in the `data_centric_curation` function is a boolean flag that
+    determines whether to retrain the XGBoost classifier on the `X_check` and `y_check` data. If
+    `retrain` is set to `True`, the XGBoost classifier. Defaults to False
+      nest: The `nest` parameter in the `data_centric_curation` function represents the number of
+    estimators (trees) to be used in the XGBoost classifier during training. It is used to specify the
+    number of boosting rounds (iterations) for the XGBoost model. Increasing the number of. Defaults to
+    100
+      curation_ythresh: The `curation_ythresh` parameter in the `data_centric_curation` function is used
+    to specify a threshold value for curation based on the uncertainty in the target labels. This
+    threshold is used in the `get_groups` function to categorize the training data points into different
+    groups based on
+      curation_xthresh: The `curation_xthresh` parameter in the `data_centric_curation` function is used
+    to set a threshold for the uncertainty metric used in the data curation process. This threshold is
+    applied to determine which data points are considered for curation based on their uncertainty level.
+    
+    Returns:
+      The function `data_centric_curation` returns four values:
+      curated_train, ambig_train, unlearnable_train, Curator_xgb
+    """
+   
     from xgboost import XGBClassifier
     import numpy as np
 
@@ -285,10 +339,10 @@ def data_centric_curation(
 
     confidence = Curator_xgb.confidence
     # confidence is an array of size [N,1] where N is the number of training data points
-
     if curation_xthresh == 0:
         print("Using adaptive threshold")
         curation_xthresh = 0.75 * (np.max(curation_xmetric) - np.min(curation_xmetric))
+    
     curation_ythresh = curation_ythresh
 
     curated_train, ambig_train, unlearnable_train = get_groups(

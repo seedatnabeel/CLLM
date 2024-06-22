@@ -16,7 +16,6 @@ def split_data(df, target_column, n_samples_per_class, random_state=42):
         .reset_index(level=0, drop=True)
     )
     remaining_data = df.drop(train_data.index)
-    # print(train_data.index)
 
     return train_data, remaining_data
 
@@ -282,43 +281,6 @@ def process_gpt(dataset, n_synthetic, temp, gpt_model, ns, seed):
         df.columns = original_cols
     return df
 
-
-def compute_success(df):
-    # Split the dataframe into two: easy variants and vanilla variants
-    df_easy = df[df["Group"].str.contains("_easy")]
-    df_vanilla = df[~df["Group"].str.contains("_easy")]
-
-    # Initialize a counter
-    counter = 0
-    total = 0
-
-    failures = []
-
-    # Iterate over each row in the easy variant dataframe
-    for _, row in df_easy.iterrows():
-        # Extract the base name (i.e., without "_easy")
-        base_name = row["Group"].replace("_easy", "")
-
-        if base_name == "Oracle":
-            continue
-
-        # Extract the accuracy of the easy variant
-        easy_accuracy = row["Accuracy"]
-
-        # Extract the accuracy of the corresponding vanilla variant
-        vanilla_accuracy = df_vanilla[df_vanilla["Group"] == base_name][
-            "Accuracy"
-        ].values[0]
-
-        # Check if the easy variant has better performance
-        if easy_accuracy > vanilla_accuracy:
-            counter += 1
-        else:
-            failures.append(base_name)
-
-        total += 1
-
-    return counter, total, failures
 
 
 def process_llama(

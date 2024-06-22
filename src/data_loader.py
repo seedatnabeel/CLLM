@@ -314,124 +314,6 @@ def load_covid_dataset(prop=1, seed=42):
     return (df.iloc[:, x_ids].drop(columns=["Race", "SG_UF_NOT"]), df.iloc[:, 0], df)
 
 
-def load_metabric(prop=1, seed=42):
-
-    def metabric_preprocess(positive_string, negative_string):
-        def preprocess(x):
-            x = str(x)
-            if x == negative_string:
-                return 0
-            elif x == positive_string:
-                return 1
-            else:
-                return -1
-
-        return preprocess
-
-    metabric_info = {
-        1: {
-            "name": "pr_status",
-            "preprocess": metabric_preprocess("Positive", "Negative"),
-        },
-        2: {
-            "name": "er_status",
-            "preprocess": metabric_preprocess("Positive", "Negative"),
-        },
-        3: {
-            "name": "er_status_measured_by_ihc",
-            "preprocess": metabric_preprocess("Positve", "Negative"),
-        },
-        4: {
-            "name": "her2_status",
-            "preprocess": metabric_preprocess("Positive", "Negative"),
-        },
-        5: {
-            "name": "her2_status_measured_by_snp6",
-            "preprocess": metabric_preprocess("GAIN", "NEUTRAL"),
-        },
-    }
-
-    raw_data = pd.read_csv(
-        "data/METABRIC_RNA_Mutation.csv",
-        low_memory=False,
-    )
-
-    rule = 1
-    Data = pd.DataFrame(raw_data.iloc[:, 31:520])
-    y_data = pd.DataFrame(raw_data[metabric_info[rule]["name"]])
-    y_data = np.array(
-        y_data[metabric_info[rule]["name"]].apply(
-            metabric_info[rule]["preprocess"],
-        ),
-    )
-
-    Data["cohort"] = raw_data.cohort
-    Data["y"] = y_data
-
-    Data = Data.sample(frac=prop, random_state=seed)
-
-    return Data.drop("y", axis=1), Data["y"], Data
-
-
-def load_cover(seed=42, prop=1):
-    df = pd.read_csv("data/covtype.csv")
-
-    df.rename(columns={"Cover_Type": "y"}, inplace=True)
-
-    df = df.sample(frac=prop, random_state=seed)
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-def load_contraceptive(seed=42, prop=1):
-    df = pd.read_csv("data/cmc.data", delimiter=",")
-    df.rename(columns={"1.2": "y"}, inplace=True)
-    df = df.sample(frac=prop, random_state=seed)
-
-    df["y"] = df["y"].replace({1: 0, 2: 1, 3: 2})
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-def load_credit(seed=42, prop=1):
-    df = pd.read_excel("data/credit_default.xls", header=1)
-
-    df.drop(["ID"], axis=1, inplace=True)
-
-    # rename columns default payment next month to y
-    df.rename(columns={"default payment next month": "y"}, inplace=True)
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-def load_telescope(seed=42, prop=1):
-    id = 1120  # 20k
-    dataset = openml.datasets.get_dataset(id)
-
-    X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format="array", target=dataset.default_target_attribute
-    )
-    df = pd.DataFrame(X, columns=attribute_names)
-    df["y"] = y
-
-    df = df.sample(frac=prop, random_state=seed)
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-def load_marketing(seed=42, prop=1):
-    id = 1461  # 45k
-    dataset = openml.datasets.get_dataset(id)
-
-    X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format="array", target=dataset.default_target_attribute
-    )
-    df = pd.DataFrame(X, columns=attribute_names)
-    df["y"] = y
-
-    df = df.sample(frac=prop, random_state=seed)
-
-    return df.drop("y", axis=1), df["y"], df
 
 
 def load_compas(seed=42, prop=1):
@@ -449,79 +331,96 @@ def load_compas(seed=42, prop=1):
     return df.drop("y", axis=1), df["y"], df
 
 
-def load_eye(seed=42, prop=1):
-    id = 1044  # 11k
-    dataset = openml.datasets.get_dataset(id)
+def load_drug_dataset(prop=1, seed=42):
+    from sklearn.impute import SimpleImputer
+    data = pd.read_csv('data/Drug_Consumption.csv')
 
-    X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format="array", target=dataset.default_target_attribute
-    )
-    df = pd.DataFrame(X, columns=attribute_names)
-    df["y"] = y
+    #Drop overclaimers, Semer, and other nondrug columns
+    data = data.drop(data[data['Semer'] != 'CL0'].index)
+    data = data.drop(['Semer', 'Caff', 'Choc'], axis=1)
+    data.reset_index()
+    print(f'In the new dataframe there are {data.shape[0]} rows and {data.shape[1]} columns')
 
-    df = df.sample(frac=prop, random_state=seed)
+    # Binary encode gender
+    data['Gender'] = data['Gender'].apply(lambda x: 1 if x == 'M' else 0)
 
-    return df.drop("y", axis=1), df["y"], df
+    # Encode ordinal features
+    ordinal_features = ['Age', 
+                        'Education',
+                        'Alcohol',
+                        'Amyl',
+                        'Amphet',
+                        'Benzos',
+                        'Cannabis',
+                        'Coke',
+                        'Crack',
+                        'Ecstasy',
+                        'Heroin',
+                        'Ketamine',
+                        'Legalh',
+                        'LSD',
+                        'Meth',
+                        'Mushrooms',
+                        'Nicotine',
+                        'VSA'    ]
+
+    # Define ordinal orderings
+    ordinal_orderings = [
+        ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'],
+        ['Left school before 16 years', 
+        'Left school at 16 years', 
+        'Left school at 17 years', 
+        'Left school at 18 years',
+        'Some college or university, no certificate or degree',
+        'Professional certificate/ diploma',
+        'University degree',
+        'Masters degree',
+        'Doctorate degree'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6'],
+        ['CL0','CL1','CL2','CL3','CL4','CL5','CL6']
+    ]
+
+    # Nominal features
+    nominal_features = ['Country',
+                        'Ethnicity']
+
+    #Create function for ordinal encoding
+    def ordinal_encoder(df, columns, ordering):
+        df = df.copy()
+        for column, ordering in zip(ordinal_features, ordinal_orderings):
+            df[column] = df[column].apply(lambda x: ordering.index(x))
+        return df
+
+    def cat_converter(df, columns):
+        df = df.copy()
+        for column in columns:
+            df[column] = df[column].astype('category').cat.codes
+        return df
+
+    data = ordinal_encoder(data, ordinal_features, ordinal_orderings)
+    data = cat_converter(data, nominal_features)
 
 
-def load_bio(seed=42, prop=1):
-    id = 4134  # 3k
-    dataset = openml.datasets.get_dataset(id)
+    nic_df = data.copy()
+    nic_df['y'] = nic_df['Nicotine'].apply(lambda x: 1 if x not in [0,1] else 0)
+    nic_df = nic_df.drop(['ID','Nicotine'], axis=1)
 
-    X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format="array", target=dataset.default_target_attribute
-    )
-    df = pd.DataFrame(X, columns=attribute_names)
-    df["y"] = y
+    return nic_df.drop('y', axis=1), nic_df['y'], nic_df
 
-    df = df.sample(frac=prop, random_state=seed)
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-# def load_credit(seed=42,prop=1):
-#     #import sklear std scaler and labelencoder
-#     from sklearn.preprocessing import StandardScaler
-#     from sklearn.preprocessing import LabelEncoder
-#     file = './data/german.data'
-#     url = "http://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data"
-
-#     names = ['existingchecking', 'duration', 'credithistory', 'purpose', 'creditamount',
-#             'savings', 'employmentsince', 'installmentrate', 'statussex', 'otherdebtors',
-#             'residencesince', 'property', 'age', 'otherinstallmentplans', 'housing',
-#             'existingcredits', 'job', 'peopleliable', 'telephone', 'foreignworker', 'classification']
-
-#     data = pd.read_csv(file,names = names, delimiter=' ')
-#     data.classification.replace([1,2], [1,0], inplace=True)
-
-#     #numerical variables labels
-#     numvars = ['creditamount', 'duration', 'installmentrate', 'residencesince', 'age',
-#             'existingcredits', 'peopleliable', 'classification']
-
-#     # Standardization
-#     numdata_std = pd.DataFrame(StandardScaler().fit_transform(data[numvars].drop(['classification'], axis=1)))
-
-#     from collections import defaultdict
-
-#     #categorical variables labels
-#     catvars = ['existingchecking', 'credithistory', 'purpose', 'savings', 'employmentsince',
-#             'statussex', 'otherdebtors', 'property', 'otherinstallmentplans', 'housing', 'job',
-#             'telephone', 'foreignworker']
-
-#     d = defaultdict(LabelEncoder)
-
-#     # Encoding the variable
-#     lecatdata = data[catvars].apply(lambda x: d[x.name].fit_transform(x))
-
-
-#     #One hot encoding, create dummy variables for every category of every categorical variable
-#     dummyvars = pd.get_dummies(data[catvars])
-
-#     df = pd.concat([data[numvars], dummyvars], axis = 1)
-
-#     # replace classification with y
-#     df.rename(columns={'classification': 'y'}, inplace=True)
-#     return df.drop('y', axis=1), df['y'], df
 
 
 def load_higgs(seed=42, prop=1):
@@ -551,152 +450,6 @@ def load_higgs(seed=42, prop=1):
     return df.drop("y", axis=1), df["y"], df
 
 
-def load_blog_data(seed=42, prop=1):
-    df = pd.read_csv("data/blogData_train.csv", header=None)
-
-    df.rename(columns={280: "y"}, inplace=True)
-
-    df["y"] = df["y"] > 0
-    df["y"] = df["y"].astype(int)
-
-    df = df.sample(frac=prop, random_state=seed)
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-def load_bank(seed=42, prop=1):
-    from sklearn.utils import shuffle
-
-    df = pd.read_csv("data/VariantI.csv")
-    for col in [
-        "payment_type",
-        "employment_status",
-        "housing_status",
-        "source",
-        "device_os",
-    ]:
-        df[col] = df[col].astype("category").cat.codes
-
-    df.rename(columns={"fraud_bool": "y"}, inplace=True)
-
-    mask = df["y"] == True
-    df_fraud = df[mask]
-    df_no = df[~mask]
-
-    n_samples = 10000
-    df = pd.concat(
-        [
-            df_fraud.sample(n_samples, random_state=seed),
-            df_no.sample(n_samples, random_state=seed),
-        ]
-    )
-
-    df = shuffle(df, random_state=seed)
-    df = df.sample(frac=prop, random_state=seed)
-
-    return df.drop("y", axis=1), df["y"], df
-
-
-def load_drug_dataset(prop=1, seed=42):
-    from sklearn.impute import SimpleImputer
-
-    data = pd.read_csv("data/Drug_Consumption.csv")
-
-    # Drop overclaimers, Semer, and other nondrug columns
-    data = data.drop(data[data["Semer"] != "CL0"].index)
-    data = data.drop(["Semer", "Caff", "Choc"], axis=1)
-    data.reset_index()
-    print(
-        f"In the new dataframe there are {data.shape[0]} rows and {data.shape[1]} columns"
-    )
-
-    # Binary encode gender
-    data["Gender"] = data["Gender"].apply(lambda x: 1 if x == "M" else 0)
-
-    # Encode ordinal features
-    ordinal_features = [
-        "Age",
-        "Education",
-        "Alcohol",
-        "Amyl",
-        "Amphet",
-        "Benzos",
-        "Cannabis",
-        "Coke",
-        "Crack",
-        "Ecstasy",
-        "Heroin",
-        "Ketamine",
-        "Legalh",
-        "LSD",
-        "Meth",
-        "Mushrooms",
-        "Nicotine",
-        "VSA",
-    ]
-
-    # Define ordinal orderings
-    ordinal_orderings = [
-        ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"],
-        [
-            "Left school before 16 years",
-            "Left school at 16 years",
-            "Left school at 17 years",
-            "Left school at 18 years",
-            "Some college or university, no certificate or degree",
-            "Professional certificate/ diploma",
-            "University degree",
-            "Masters degree",
-            "Doctorate degree",
-        ],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-        ["CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6"],
-    ]
-
-    # Nominal features
-    nominal_features = ["Country", "Ethnicity"]
-
-    # Create function for ordinal encoding
-    def ordinal_encoder(df, columns, ordering):
-        df = df.copy()
-        for column, ordering in zip(ordinal_features, ordinal_orderings):
-            df[column] = df[column].apply(lambda x: ordering.index(x))
-        return df
-
-    def cat_converter(df, columns):
-        df = df.copy()
-        for column in columns:
-            df[column] = df[column].astype("category").cat.codes
-        return df
-
-    data = ordinal_encoder(data, ordinal_features, ordinal_orderings)
-    data = cat_converter(data, nominal_features)
-
-    nic_df = data.copy()
-    nic_df["y"] = nic_df["Nicotine"].apply(lambda x: 1 if x not in [0, 1] else 0)
-    nic_df = nic_df.drop(["ID", "Nicotine"], axis=1)
-
-    return nic_df.drop("y", axis=1), nic_df["y"], nic_df
-
-
-def load_fraud_dataset(prop=1, seed=42):
-    df = pd.read_csv("data/creditcard.csv")
-    df = df.sample(frac=prop, random_state=seed)
-    return (df.drop(columns=["Class"]), df["Class"], df)
 
 
 def get_data(dataset, seed=42, prop=1.0):
@@ -745,49 +498,16 @@ def get_data(dataset, seed=42, prop=1.0):
     if dataset == "adult":
         df_feat, df_label, df = load_adult_dataset(prop=prop, seed=seed)
 
-    if dataset == "metabric":
-        df_feat, df_label, df = load_metabric(prop=prop, seed=seed)
-
-    if dataset == "bank":
-        df_feat, df_label, df = load_bank(prop=prop, seed=seed)
-
     if dataset == "drug":
         df_feat, df_label, df = load_drug_dataset(prop=prop, seed=seed)
 
     if dataset == "maggic":
         df_feat, df_label, df = load_maggic_dataset(prop=prop, seed=seed)
 
-    if dataset == "fraud":
-        df_feat, df_label, df = load_fraud_dataset(prop=prop, seed=seed)
-
     if dataset == "higgs":
         df_feat, df_label, df = load_higgs(prop=prop, seed=seed)
 
-    if dataset == "contraceptive":
-        df_feat, df_label, df = load_contraceptive(prop=prop, seed=seed)
-
-    if dataset == "blog":
-        df_feat, df_label, df = load_blog_data(prop=prop, seed=seed)
-
-    if dataset == "cover":
-        df_feat, df_label, df = load_cover(prop=prop, seed=seed)
-
-    if dataset == "credit":
-        df_feat, df_label, df = load_credit(prop=prop, seed=seed)
-
-    if dataset == "telescope":
-        df_feat, df_label, df = load_telescope(prop=prop, seed=seed)
-
-    if dataset == "bio":
-        df_feat, df_label, df = load_bio(prop=prop, seed=seed)
-
-    if dataset == "eye":
-        df_feat, df_label, df = load_eye(prop=prop, seed=seed)
-
     if dataset == "compas":
         df_feat, df_label, df = load_compas(prop=prop, seed=seed)
-
-    if dataset == "marketing":
-        df_feat, df_label, df = load_marketing(prop=prop, seed=seed)
 
     return df_feat, df_label, df

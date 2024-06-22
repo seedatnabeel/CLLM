@@ -21,6 +21,61 @@ def llm_gen(
     n_processes=10,
     ic_samples=20,
 ):
+    
+    """
+    The function `llm_gen` generates synthetic data based on a given prompt using different language
+    model APIs.
+    
+    Args:
+      prompt: The `llm_gen` function you provided seems to be a data generation function that uses a
+    language model to generate synthetic data based on a given prompt and example data. Here's an
+    explanation of the parameters used in the function:
+      generator_template: The `llm_gen` function you provided seems to be a data generation function
+    that uses a language model to generate synthetic data based on a given prompt and example data. It
+    interacts with different types of language model serving environments like "together", "vllm", and
+    "azure_openai"
+      format_instructions: The `format_instructions` parameter likely contains instructions on how to
+    format the data for the model. It could include details on how to structure the input data, such as
+    column names, data types, and any specific formatting requirements the model expects. This
+    information is crucial for preparing the input data correctly before feeding
+      example_df: The `example_df` parameter in the `llm_gen` function is a pandas DataFrame that
+    contains the example data used for generating synthetic data. It is sampled within the function to
+    create a smaller dataset (`small_data`) that is then used as input for the language model (LLM) to
+    generate
+      llm_serving: The `llm_serving` parameter in the function `llm_gen` determines the type of language
+    model serving platform that will be used for generating synthetic data. The possible values for
+    `llm_serving` in this function are:
+      api_details: The `api_details` parameter in the `llm_gen` function likely contains details needed
+    for API authentication and endpoint configuration. It may include information such as the API base
+    URL, API key, API version, and API type specific to the service being used (e.g., Azure OpenAI).
+      n_samples: The `n_samples` parameter in the `llm_gen` function represents the number of synthetic
+    data samples that you want to generate. This parameter specifies the total number of data samples
+    that the function should aim to generate before stopping and returning the generated synthetic data.
+    Defaults to 100
+      temperature: The `temperature` parameter in the `llm_gen` function controls the randomness of the
+    generated text. A lower temperature value (close to 0) will result in more deterministic outputs,
+    where the model is more likely to choose high-probability tokens. On the other hand, a higher
+    temperature
+      max_tokens: The `max_tokens` parameter in the `llm_gen` function specifies the maximum number of
+    tokens (words or subwords) that the language model can generate in response to the input prompt.
+    This parameter helps control the length and complexity of the generated text. In the provided
+    function, the `max. Defaults to 8000
+      model: The `model` parameter in the `llm_gen` function refers to the specific language model that
+    will be used for generating synthetic data. In this case, the default value for the `model`
+    parameter is set to "gpt4_20230815". This model will be utilized by the. Defaults to gpt4_20230815
+      n_processes: The `n_processes` parameter in the `llm_gen` function specifies the number of
+    parallel processes to use for generating responses from the language model. In this function, it is
+    used to control how many parallel processes are created to interact with the language model for
+    generating synthetic data based on the provided inputs. Defaults to 10
+      ic_samples: The `ic_samples` parameter in the `llm_gen` function represents the number of samples
+    to be taken from the example dataframe for each iteration of the data generation process. In the
+    provided code snippet, `ic_samples` is used to sample a subset of the example dataframe before
+    formatting the data and. Defaults to 20
+    
+    Returns:
+      The function `llm_gen` returns a pandas DataFrame `df_llm` containing the generated synthetic data
+    based on the provided inputs and parameters.
+    """
 
     init = True
     not_sufficient = True
