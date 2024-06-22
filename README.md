@@ -23,7 +23,7 @@ For more details, please read our [paper](https://arxiv.org/abs/2312.12112): *Cu
     virtualenv cllm_env
 ```
 
-3. (b) Create a new conda environment with Python 3.10. e.g:
+2. (b) Create a new conda environment with Python 3.10. e.g:
 ```shell
     conda create -n cllm_env python=3.10
 ```
