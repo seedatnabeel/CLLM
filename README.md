@@ -6,13 +6,11 @@
 
 ![image](overview_cllm.png "Overview of CLLM")
 
-Note: Repository still under construction...
-
 This repository contains the implementation of CLLM from the paper "Curated LLM: Synergy of LLMs and Data Curation for tabular augmentation in low-data regimes".
 
 🔎 CLLM is a synthetic data generation framework using LLMs for synthetic generation, coupled with a principled data-centric curation mechanism --- ensuring high quality data!
 
-CLLM supports LLMs deployed Azure OpenAI, Together or VLLM 🥳
+CLLM supports using LLMs via Azure OpenAI, Together or VLLM 🥳
 
 For more details, please read our [paper](https://arxiv.org/abs/2312.12112): *Curated LLM: Synergy of LLMs and Data Curation for tabular augmentation in low-data regimes*.
 
