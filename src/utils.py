@@ -213,7 +213,6 @@ def process_gpt(dataset, n_synthetic, temp, gpt_model, ns, seed):
         df = loaded["llm"]["X"]
         df["target"] = loaded["llm"]["y"]
 
-    df = df.dropna()
     df = df[
         ~df.apply(
             lambda row: any(
@@ -242,6 +241,12 @@ def process_gpt(dataset, n_synthetic, temp, gpt_model, ns, seed):
     example_df = loaded["Original"]["X"]
     example_df["target"] = loaded["Original"]["y"]
 
+    # sometimes the LLM adds extra columns
+    if example_df.shape[1]!=df.shape[1]:
+        df = df[example_df.columns]
+
+    df = df.dropna()
+
     if gpt_model == "gpt4_nocol":
         original_cols = example_df.columns
         example_df.columns = [
@@ -251,6 +256,14 @@ def process_gpt(dataset, n_synthetic, temp, gpt_model, ns, seed):
     try:
         df = df.astype(example_df.dtypes)
     except:
+        # convert strings to numerical
+        for col in df.columns:
+            if example_df[col].dtype == 'int64':
+                df[col] = pd.to_numeric(df[col], errors='coerce', downcast='integer')
+            else:
+                df[col] = df[col].astype(example_df[col].dtype)
+
+
         # Assuming the dtypes from the example_df['Dtrain'].dataframe() is what you want
         target_dtypes = example_df.dtypes.to_dict()
 
