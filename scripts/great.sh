@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Get the directory of the current script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+SCRIPT="$SCRIPT_DIR/../src/cllm/run_great.py"
+
 # Declare the arrays
 datasets=("covid" "seer" "compas" "cutract" "maggic")
 n_values=(10 50 100)
@@ -13,8 +17,8 @@ do
     for runseed in "${seeds[@]}"
     do
       # Run the command
-      fuser -v /dev/nvidia0 -k
-      python ../src/run_great.py --dataset $dataset --runseed $runseed --ns $ns
+      # fuser -v /dev/nvidia0 -k # Use with caution
+      python "$SCRIPT" --dataset $dataset --seed $runseed --ns $ns
 
     done
   done

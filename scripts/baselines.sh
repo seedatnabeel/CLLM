@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Get the directory of the current script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+SCRIPT="$SCRIPT_DIR/../src/cllm/run_baselines.py"
+
 # Declare the arrays
 datasets=("covid" "seer" "compas" "cutract" "maggic")
 n_values=(10 50 100)
@@ -13,8 +17,8 @@ do
     for dataset in "${datasets[@]}"
     do
       # Run the command
-      fuser -v /dev/nvidia0 -k
-      python ../src/run_baselines.py --dataset $dataset --ns $ns --seed $seed
+      # fuser -v /dev/nvidia0 -k # Use with caution
+      python "$SCRIPT" --dataset $dataset --ns $ns --seed $seed
 
     done
   done

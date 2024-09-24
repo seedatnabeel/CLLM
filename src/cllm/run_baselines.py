@@ -1,9 +1,12 @@
 import pandas as pd
+from imblearn.over_sampling import SMOTE
+from synthcity.plugins import Plugins
 import torch
-from src.models import *
-from src.utils import *
-from src.data_loader import *
+from cllm.models import *
+from cllm.utils import *
+from cllm.data_loader import *
 from copy import deepcopy
+from pathlib import Path
 
 # Split remaining data into validation and test sets
 from sklearn.model_selection import train_test_split
@@ -11,6 +14,7 @@ from copy import deepcopy
 import pickle
 import argparse
 
+save_df_path = Path().resolve() / "save_dfs"
 
 def main():
     parser = argparse.ArgumentParser(description="Run baselines on a dataset.")
@@ -18,15 +22,13 @@ def main():
         "--dataset", type=str, default="seer", help="Name of the dataset"
     )
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
-    parser.add_argument("--ns", type=int, default=0, help="Random seed")
+    parser.add_argument("--ns", type=int, default=0, help="n_samples per class")
     args = parser.parse_args()
 
     ns = args.ns
     dataset = args.dataset
     seed = args.seed
     n_synthetic = 1000
-
-    print(f"Running {dataset} {seed} {ns}")
 
     # covid, seer, cutract, support, maggic, adult, compas [drug, fraud]
 
@@ -43,24 +45,30 @@ def main():
     X_train_orig = deepcopy(X_train)
     y_train_orig = deepcopy(y_train)
 
+    # dict to store all results
     results = {}
 
     results["Original"] = {"X": X_train_orig, "y": y_train_orig}
     results["Oracle"] = {"X": X_val, "y": y_val}
     results["Test"] = {"X": X_test, "y": y_test}
 
-    # # apply Great
-    X_syn, y_syn = great(
-        X_train_orig,
-        y_train_orig,
-        n_synthetic=n_synthetic,
-        epochs=1000,
-        max_length=4000,
-    )
+    # apply SMOTE
+    X_syn, y_syn = smote(X_train_orig, y_train_orig, n_synthetic=n_synthetic)
 
-    results["great"] = {"X": X_syn, "y": y_syn}
+    results["smote"] = {"X": X_syn, "y": y_syn}
 
-    with open(f"save_dfs/great_pipeline_{dataset}_{seed}_{ns}.pickle", "wb") as f:
+    # synthcity models
+    generative_models = ["tvae", "ctgan", "nflow", "ddpm"]
+    for model_name in generative_models:
+        X_syn, y_syn = synthcity_generate(
+            name=model_name,
+            X_train=deepcopy(X_train_orig),
+            y_train=deepcopy(y_train_orig),
+            n_synthetic=n_synthetic,
+        )
+        results[model_name] = {"X": X_syn, "y": y_syn}
+
+    with open(save_df_path / f"baselines_pipeline_{dataset}_{seed}_{ns}.pickle", "wb") as f:
         pickle.dump(results, f)
 
 
