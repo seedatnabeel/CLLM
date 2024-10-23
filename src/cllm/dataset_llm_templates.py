@@ -2,7 +2,6 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import ResponseSchema
 from langchain.output_parsers import StructuredOutputParser
 
-import os
 import pandas as pd
 
 

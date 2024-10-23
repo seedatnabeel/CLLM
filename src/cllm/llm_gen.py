@@ -2,7 +2,6 @@ import re
 import json
 import pandas as pd
 from copy import deepcopy
-import os
 import openai
 from langchain.prompts import ChatPromptTemplate
 
@@ -209,8 +208,10 @@ def llm_gen(
                     df_list.append(df_tmp)
 
                 else:
+                    print(f"idx: {idx}")
                     if idx == 0:
                         df_tmp = deepcopy(pd.DataFrame(dicts))
+                        print(f"df_tmp {df_tmp.head()}")
                         df_tmp = df_tmp[
                             ~df_tmp.apply(
                                 lambda row: any(
@@ -250,7 +251,13 @@ def llm_gen(
                                 axis=1,
                             )
                         ]
-                        df_tmp = df_tmp.append(df_check, ignore_index=True)
+                        try:
+                            df_tmp = df_tmp.append(df_check, ignore_index=True)
+                        except UnboundLocalError as e:
+                            print(f"Error occurred: idx - {idx}, llm_serving - {llm_serving}")
+                            print(f"df_tmp not previously created should be: {pd.DataFrame(dicts)}")
+                            df_tmp = deepcopy(pd.DataFrame(dicts))
+                            df_tmp = df_tmp.append(df_check, ignore_index=True)
 
             if llm_serving == "vllm":
                 df_tmp = df_list[0]
